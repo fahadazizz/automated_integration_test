@@ -22,7 +22,7 @@ Add this to your package's pubspec.yaml file:
 
 ```yaml
 dependencies:
-  automated_integration_test: ^1.0.0
+  automated_integration_test: ^1.0.2
 ```
 
 ## Quick Start Guide
@@ -31,126 +31,59 @@ dependencies:
    Add the package to your app's `pubspec.yaml`:
    ```yaml
    dependencies:
-     automated_integration_test: ^1.0.0
+     automated_integration_test: ^1.0.2
    ```
 
-2. **Initialize the Recorder**
+2. **Update Android NDK Version**
+   In your app's `android/app/build.gradle`, add:
+   ```gradle
+   android {
+       ...
+       ndkVersion "27.0.12077973"
+       ...
+   }
+   ```
+
+3. **Initialize the Recorder**
    In your `main.dart`, initialize the recorder early in the app lifecycle:
    ```dart
    void main() async {
      WidgetsFlutterBinding.ensureInitialized();
      
-     // Initialize the recorder (no context needed)
+     // Initialize the recorder
      await AutoTestRecorder.initialize();
      
      runApp(const MyApp());
    }
    ```
 
-3. **Wrap Your App**
-   Wrap your `MaterialApp` with the recorder:
+4. **Wrap Your App**
+   Wrap your app content with the recorder:
    ```dart
    class MyApp extends StatelessWidget {
      @override
      Widget build(BuildContext context) {
-       return AutoTestRecorder.instance.wrapApp(
-         MaterialApp(
-           home: MyHomePage(),
-         ),
+       return MaterialApp(
+         title: 'Your App',
+         theme: ThemeData(primarySwatch: Colors.blue),
+         // Wrap your home screen with AutoTestRecorder
+         home: AutoTestRecorder.instance.wrapApp(const YourHomeScreen()),
        );
      }
    }
    ```
 
-4. **Run Your App**
+5. **Run Your App**
    Run your app in development mode:
    ```bash
    flutter run
    ```
-
-5. **Interact with Your App**
-   - Use your app normally
-   - All UI interactions will be automatically recorded
-   - Recording stops automatically when the app is paused or closed
 
 6. **Check Generated Tests**
    After running your app, check the generated tests in:
    ```
    test/integration/YYYY-MM-DD_HH-mm-ss_[session-id]_test.dart
    ```
-
-## Complete Example
-
-Here's a complete example showing how to use the package:
-
-```dart
-import 'package:flutter/material.dart';
-import 'package:automated_integration_test/automated_integration_test.dart';
-
-void main() async {
-  WidgetsFlutterBinding.ensureInitialized();
-  
-  // Initialize the recorder (no context needed)
-  await AutoTestRecorder.initialize();
-  
-  runApp(const MyApp());
-}
-
-class MyApp extends StatelessWidget {
-  const MyApp({Key? key}) : super(key: key);
-
-  @override
-  Widget build(BuildContext context) {
-    return AutoTestRecorder.instance.wrapApp(
-      MaterialApp(
-        title: 'Automated Test Demo',
-        theme: ThemeData(primarySwatch: Colors.blue),
-        home: const MyHomePage(),
-      ),
-    );
-  }
-}
-
-class MyHomePage extends StatelessWidget {
-  const MyHomePage({Key? key}) : super(key: key);
-
-  @override
-  Widget build(BuildContext context) {
-    return Scaffold(
-      appBar: AppBar(title: const Text('Automated Test Demo')),
-      body: Padding(
-        padding: const EdgeInsets.all(16.0),
-        child: Column(
-          mainAxisAlignment: MainAxisAlignment.center,
-          children: [
-            // Text input field
-            TextField(
-              decoration: const InputDecoration(
-                labelText: 'Enter your name',
-                border: OutlineInputBorder(),
-              ),
-            ),
-            const SizedBox(height: 20),
-            
-            // Button to navigate to second screen
-            ElevatedButton(
-              onPressed: () {
-                Navigator.push(
-                  context,
-                  MaterialPageRoute(
-                    builder: (context) => const SecondScreen(),
-                  ),
-                );
-              },
-              child: const Text('Go to Second Screen'),
-            ),
-          ],
-        ),
-      ),
-    );
-  }
-}
-```
 
 ## Generated Tests
 
@@ -169,14 +102,7 @@ void main() {
     await tester.pumpAndSettle();
     
     // Tap the navigation button
-    await tester.tap(find.text('Go to Second Screen'));
-    await tester.pumpAndSettle();
-    
-    // Verify we're on the second screen
-    expect(find.text('Welcome to Second Screen!'), findsOneWidget);
-    
-    // Tap the back button
-    await tester.tap(find.text('Go Back'));
+    await tester.tap(find.text('Go to Next Screen'));
     await tester.pumpAndSettle();
   });
 }
@@ -204,7 +130,6 @@ All interactions are saved to a JSON file and later converted into executable Fl
 
 1. **Initialize Early**
    - Initialize the recorder as early as possible in your app lifecycle
-   - Use a global navigator key to access context
 
 2. **Development Mode**
    - Always run in development mode for recording
@@ -214,10 +139,6 @@ All interactions are saved to a JSON file and later converted into executable Fl
    - Check generated tests after each recording session
    - Review and modify generated tests as needed
    - Add assertions to verify expected behavior
-
-4. **Navigation**
-   - Use named routes for better test generation
-   - Keep navigation paths simple and predictable
 
 ## Troubleshooting
 
@@ -230,11 +151,6 @@ All interactions are saved to a JSON file and later converted into executable Fl
    - Make sure widgets are standard Flutter widgets
    - Check if widgets are properly wrapped in the widget tree
    - Verify the app is not in release mode
-
-3. **Test Generation Errors**
-   - Check for proper widget keys
-   - Ensure all required dependencies are installed
-   - Verify Flutter SDK version compatibility
 
 ## Contributing
 

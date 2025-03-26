@@ -1,3 +1,29 @@
+/// A package that automatically records UI interactions and generates integration tests.
+///
+/// This package provides functionality to:
+/// * Record button taps, text input, and navigation events
+/// * Generate executable integration tests from recorded interactions
+/// * Automatically handle test recording in development mode
+///
+/// Example usage:
+/// ```dart
+/// void main() async {
+///   WidgetsFlutterBinding.ensureInitialized();
+///   await AutoTestRecorder.initialize();
+///   runApp(const MyApp());
+/// }
+///
+/// class MyApp extends StatelessWidget {
+///   @override
+///   Widget build(BuildContext context) {
+///     return AutoTestRecorder.instance.wrapApp(
+///       MaterialApp(home: MyHomePage()),
+///     );
+///   }
+/// }
+/// ```
+library automated_integration_test;
+
 import 'dart:async';
 import 'package:flutter/material.dart';
 import 'package:path_provider/path_provider.dart';
@@ -11,11 +37,25 @@ import 'src/recording_navigator.dart';
 import 'src/widget_observer.dart';
 
 /// The main class for automated integration testing.
+///
+/// This class handles:
+/// * Recording UI interactions
+/// * Managing test sessions
+/// * Generating integration tests
+///
+/// To use this class:
+/// 1. Initialize it in your main() function
+/// 2. Wrap your MaterialApp with wrapApp()
+/// 3. Run your app in development mode
+/// 4. Tests will be generated automatically
 class AutoTestRecorder {
   static AutoTestRecorder? _instance;
 
   /// Gets the singleton instance of AutoTestRecorder.
+  ///
   /// Make sure to call [initialize] before accessing this.
+  ///
+  /// Throws a [StateError] if accessed before initialization.
   static AutoTestRecorder get instance {
     if (_instance == null) {
       throw StateError(
@@ -41,7 +81,18 @@ class AutoTestRecorder {
   AutoTestRecorder._();
 
   /// Initializes the AutoTestRecorder.
+  ///
   /// This should be called early in your app's lifecycle, typically in main().
+  /// The recorder will automatically start recording in development mode.
+  ///
+  /// Example:
+  /// ```dart
+  /// void main() async {
+  ///   WidgetsFlutterBinding.ensureInitialized();
+  ///   await AutoTestRecorder.initialize();
+  ///   runApp(const MyApp());
+  /// }
+  /// ```
   static Future<void> initialize() async {
     if (_instance != null) return;
 
@@ -64,18 +115,32 @@ class AutoTestRecorder {
       inputHandler: _inputHandler,
     );
 
-    // Check if we're in development mode
     _isDevelopmentMode = !const bool.fromEnvironment('dart.vm.product');
 
     if (_isDevelopmentMode) {
-      // Start recording automatically in development mode
       _widgetObserver.startRecording();
       WidgetsBinding.instance.addObserver(_widgetObserver);
     }
   }
 
-  /// Wraps a widget with recording capabilities.
-  /// This should be used at the root of your app to enable navigation tracking.
+  /// Wraps your app with recording capabilities.
+  ///
+  /// This method should be used at the root of your app to enable:
+  /// * Navigation tracking
+  /// * Button tap recording
+  /// * Text input recording
+  ///
+  /// Example:
+  /// ```dart
+  /// @override
+  /// Widget build(BuildContext context) {
+  ///   return AutoTestRecorder.instance.wrapApp(
+  ///     MaterialApp(home: MyHomePage()),
+  ///   );
+  /// }
+  /// ```
+  ///
+  /// The recording only happens in development mode.
   Widget wrapApp(Widget child) {
     if (!_isDevelopmentMode) return child;
 
@@ -90,6 +155,9 @@ class AutoTestRecorder {
   }
 
   /// Stops recording and saves the current session.
+  ///
+  /// This is automatically called when the app is paused or closed.
+  /// The session data is saved to a JSON file in the app's documents directory.
   Future<void> stopRecording() async {
     if (!_isDevelopmentMode || _currentSessionPath == null) return;
 
@@ -108,6 +176,9 @@ class AutoTestRecorder {
   }
 
   /// Generates a test file from the current session.
+  ///
+  /// Returns the generated test code as a string.
+  /// The test file is saved in the test/integration directory.
   Future<String> generateTest() async {
     if (!_isDevelopmentMode || _currentSessionPath == null) return '';
     return await _testGenerator.generateTest(_currentSessionPath!);

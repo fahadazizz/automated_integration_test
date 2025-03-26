@@ -1,7 +1,10 @@
 name: automated_integration_test
 description: A zero-config Flutter package that automatically records UI interactions and generates executable integration tests during development.
-version: 1.0.0
+version: 1.0.1
 homepage: https://github.com/fahadazizz/automated_integration_test
+repository: https://github.com/fahadazizz/automated_integration_test
+issue_tracker: https://github.com/fahadazizz/automated_integration_test/issues
+documentation: https://github.com/fahadazizz/automated_integration_test#readme
 
 environment:
   sdk: '>=3.0.0 <4.0.0'
@@ -10,33 +13,23 @@ environment:
 dependencies:
   flutter:
     sdk: flutter
-  path_provider: ^2.1.1
-  uuid: ^4.2.1
-  intl: ^0.18.1
-  path: ^1.8.3
+  path_provider: ^2.1.2
+  uuid: ^4.3.3
+  intl: ^0.19.0
+  path: ^1.9.0
 
 dev_dependencies:
   flutter_test:
     sdk: flutter
-  flutter_lints: ^2.0.0
+  flutter_lints: ^3.0.1
   integration_test:
     sdk: flutter
 
-flutter:
-  plugin:
-    platforms:
-      android:
-        default_package: automated_integration_test
-      ios:
-        default_package: automated_integration_test
-      web:
-        default_package: automated_integration_test
-      windows:
-        default_package: automated_integration_test
-      macos:
-        default_package: automated_integration_test
-      linux:
-        default_package: automated_integration_test
+topics:
+  - testing
+  - integration-testing
+  - automation
+  - ui-testing
 
 # For information on the generic Dart part of this file, see the
 # following page: https://dart.dev/tools/pub/pubspec

@@ -31,7 +31,7 @@ dependencies:
    Add the package to your app's `pubspec.yaml`:
    ```yaml
    dependencies:
-     automated_integration_test: ^1.0.2
+     automated_integration_test: ^1.0.3
    ```
 
 2. **Update Android NDK Version**

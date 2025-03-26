@@ -1,6 +1,6 @@
 name: automated_integration_test
 description: A zero-config Flutter package that automatically records UI interactions and generates executable integration tests during development.
-version: 1.0.2
+version: 1.0.3
 homepage: https://github.com/fahadazizz/automated_integration_test
 repository: https://github.com/fahadazizz/automated_integration_test
 issue_tracker: https://github.com/fahadazizz/automated_integration_test/issues

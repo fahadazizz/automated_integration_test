@@ -1,27 +1,3 @@
-/// A package that automatically records UI interactions and generates integration tests.
-///
-/// This package provides functionality to:
-/// * Record button taps, text input, and navigation events
-/// * Generate executable integration tests from recorded interactions
-/// * Automatically handle test recording in development mode
-///
-/// Example usage:
-/// ```dart
-/// void main() async {
-///   WidgetsFlutterBinding.ensureInitialized();
-///   await AutoTestRecorder.initialize();
-///   runApp(const MyApp());
-/// }
-///
-/// class MyApp extends StatelessWidget {
-///   @override
-///   Widget build(BuildContext context) {
-///     return AutoTestRecorder.instance.wrapApp(
-///       MaterialApp(home: MyHomePage()),
-///     );
-///   }
-/// }
-/// ```
 library automated_integration_test;
 
 import 'dart:async';
@@ -48,7 +24,7 @@ import 'src/widget_observer.dart';
 /// 2. Wrap your MaterialApp with wrapApp()
 /// 3. Run your app in development mode
 /// 4. Tests will be generated automatically
-class AutoTestRecorder {
+class AutoTestRecorder with WidgetsBindingObserver {
   static AutoTestRecorder? _instance;
 
   /// Gets the singleton instance of AutoTestRecorder.
@@ -77,6 +53,7 @@ class AutoTestRecorder {
   String? _currentSessionId;
   String? _currentSessionPath;
   bool _isDevelopmentMode = false;
+  bool _hasRecordedInteractions = false;
 
   AutoTestRecorder._();
 
@@ -119,6 +96,7 @@ class AutoTestRecorder {
 
     if (_isDevelopmentMode) {
       _widgetObserver.startRecording();
+      WidgetsBinding.instance.addObserver(this);
       WidgetsBinding.instance.addObserver(_widgetObserver);
     }
   }
@@ -154,6 +132,14 @@ class AutoTestRecorder {
     );
   }
 
+  @override
+  void didChangeAppLifecycleState(AppLifecycleState state) {
+    if (state == AppLifecycleState.paused ||
+        state == AppLifecycleState.detached) {
+      stopRecording();
+    }
+  }
+
   /// Stops recording and saves the current session.
   ///
   /// This is automatically called when the app is paused or closed.
@@ -164,15 +150,25 @@ class AutoTestRecorder {
     _widgetObserver.stopRecording();
     WidgetsBinding.instance.removeObserver(_widgetObserver);
 
-    final sessionData = {
-      'sessionId': _currentSessionId,
-      'timestamp': DateTime.now().toIso8601String(),
-      'interactions': _interactionRecorder.getRecordedInteractions(),
-      'navigation': _navigationTracker.getNavigationHistory(),
-      'inputs': _inputHandler.getInputHistory(),
-    };
+    final interactions = _interactionRecorder.getRecordedInteractions();
+    final navigation = _navigationTracker.getNavigationHistory();
+    final inputs = _inputHandler.getInputHistory();
 
-    await _testGenerator.saveSession(sessionData, _currentSessionPath!);
+    // Only generate test if there were interactions
+    if (interactions.isNotEmpty || navigation.isNotEmpty || inputs.isNotEmpty) {
+      _hasRecordedInteractions = true;
+
+      final sessionData = {
+        'sessionId': _currentSessionId,
+        'timestamp': DateTime.now().toIso8601String(),
+        'interactions': interactions,
+        'navigation': navigation,
+        'inputs': inputs,
+      };
+
+      await _testGenerator.saveSession(sessionData, _currentSessionPath!);
+      await _testGenerator.generateTest(_currentSessionPath!);
+    }
   }
 
   /// Generates a test file from the current session.
@@ -180,7 +176,17 @@ class AutoTestRecorder {
   /// Returns the generated test code as a string.
   /// The test file is saved in the test/integration directory.
   Future<String> generateTest() async {
-    if (!_isDevelopmentMode || _currentSessionPath == null) return '';
+    if (!_isDevelopmentMode ||
+        _currentSessionPath == null ||
+        !_hasRecordedInteractions) return '';
     return await _testGenerator.generateTest(_currentSessionPath!);
+  }
+
+  /// Disposes the recorder and generates tests if needed.
+  void dispose() {
+    if (_isDevelopmentMode) {
+      stopRecording();
+      WidgetsBinding.instance.removeObserver(this);
+    }
   }
 }
